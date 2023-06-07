@@ -3,6 +3,8 @@ import { createUseStyles } from 'react-jss';
 import IconChevronUp from './icons/chevron-up-solid.svg';
 import IconChevronDown from './icons/chevron-down-solid.svg';
 import IconCheck from './icons/check-solid.svg';
+import ClickAwayListener from 'react-click-away-listener';
+
 
 type StyleProps = {
   open?: boolean;
@@ -10,8 +12,14 @@ type StyleProps = {
 const useStyles = createUseStyles(() => ({
   select: {
     minWidth: 300,
+    position: 'relative',
   },
   dropdown: ({ open }: StyleProps) => ({
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    zIndex: 1,
     display: open ? 'flex' : 'none',
     flexDirection: 'column',
     padding: 8,
@@ -90,41 +98,43 @@ export function Select({ value, options, placeholder, onChange }: SelectProps) {
   const classes = useStyles({ open });
   return (
     <>
-      <div className={classes.select} >
-        <div
-          onClick={() => setOpen(p => !p)}
-          onKeyDown={(e) => { if (e.key === 'Enter') setOpen(p => !p); }}
-          className={classes.selectBox}
-          tabIndex={0}
-          role="button"
-        >
-          <span>
-            {value ?? placeholder}
-          </span>
-          <img width={12} height={12} src={open ? IconChevronUp : IconChevronDown} />
+      <ClickAwayListener onClickAway={() => setOpen(false)}>
+        <div className={classes.select}>
+          <div
+            onClick={() => setOpen(p => !p)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setOpen(p => !p); }}
+            className={classes.selectBox}
+            tabIndex={0}
+            role="button"
+          >
+            <span>
+              {value ?? placeholder}
+            </span>
+            <img width={12} height={12} src={open ? IconChevronUp : IconChevronDown} />
+          </div>
+          <div className={classes.dropdown}>
+            {options.map(o => {
+              return (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={classes.option + (o.value === value ? " active" : "")}
+                  key={o.value}
+                  data-value={o.value}
+                  onClick={() => { onChange(o); }}
+                  onKeyUp={(e) => { if (e.key === 'Enter') { onChange(o), setOpen(false); } }}
+                >
+                  {o.value === value
+                    ? `Yeeeah, ${(o.label ?? o.value).toLowerCase()}!`
+                    : (o.label ?? o.value)
+                  }
+                  <span className='check' />
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div className={classes.dropdown}>
-          {options.map(o => {
-            return (
-              <div
-                role="button"
-                tabIndex={0}
-                className={classes.option + (o.value === value ? " active" : "")}
-                key={o.value}
-                data-value={o.value}
-                onClick={() => onChange(o)}
-                onKeyUp={(e) => { if (e.key === 'Enter') onChange(o); }}
-              >
-                {o.value === value
-                  ? `Yeeeah, ${(o.label ?? o.value).toLowerCase()}!`
-                  : (o.label ?? o.value)
-                }
-                <span className='check' />
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      </ClickAwayListener>
     </>
   );
 }
